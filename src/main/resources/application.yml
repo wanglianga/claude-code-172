@@ -1,0 +1,54 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: community-delivery
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/delivery}
+    username: ${SPRING_DATASOURCE_USERNAME:delivery}
+    password: ${SPRING_DATASOURCE_PASSWORD:delivery123}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: false
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        delivery.timeout.ms: 12000
+    consumer:
+      group-id: delivery-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "com.community.delivery.event.dto"
+
+app:
+  kafka:
+    enabled: ${KAFKA_ENABLED:true}
+    topic: delivery-events
+  # 业务规则默认值（可被小区级物业规则覆盖）
+  rules:
+    pickup-timeout-seconds: 900        # 用户超时不取：15 分钟
+    cold-chain-timeout-seconds: 600   # 冷藏订单超时：10 分钟（短于取件超时，冷链优先升级人工）
+    low-battery-threshold: 20         # 低电量阈值（%）
+    blocking-wait-seconds: 30         # 避障基础停留时长
+    night-start: "22:00"
+    night-end: "06:00"
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+
+logging:
+  level:
+    org.springframework.kafka: WARN
