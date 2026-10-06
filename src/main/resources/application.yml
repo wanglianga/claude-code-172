@@ -1,0 +1,50 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: robot-delivery
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:robot_delivery}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+    consumer:
+      group-id: robot-delivery
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      enable-auto-commit: true
+
+# 配送业务参数（均可通过环境变量覆盖，便于演示超时类异常）
+delivery:
+  pickup-timeout-seconds: ${PICKUP_TIMEOUT_SECONDS:600}      # 用户超时不取（默认10分钟）
+  coldchain-timeout-seconds: ${COLDCHAIN_TIMEOUT_SECONDS:2700} # 冷藏订单履约时限（默认45分钟）
+  elevator-timeout-seconds: ${ELEVATOR_TIMEOUT_SECONDS:180}   # 电梯请求超时（默认3分钟）
+  low-battery-threshold: ${LOW_BATTERY_THRESHOLD:20}          # 低电量阈值（%）
+  scheduler-interval-ms: ${SCHEDULER_INTERVAL_MS:10000}       # 超时巡检间隔
+  scheduler-enabled: ${SCHEDULER_ENABLED:true}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: alpha
+  api-docs:
+    path: /v3/api-docs
+
+logging:
+  level:
+    org.apache.kafka: warn
+    org.springframework.kafka: warn
